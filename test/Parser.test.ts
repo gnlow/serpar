@@ -6,7 +6,7 @@ const { Num, Div, Mul, BinExpr } = $
 
 Deno.test("Parser.parse - basic", () => {
     assertEquals(
-        Parser.parse(rules`
+        Parser.from(rules`
             Mul -> opA
             Div -> opA
             Add -> opB
@@ -15,7 +15,7 @@ Deno.test("Parser.parse - basic", () => {
             expr opB expr -> BinExpr
             Num -> expr
             BinExpr -> expr
-        `)([
+        `).parse([
             Num("1"),
             Div(),
             Num("2"),

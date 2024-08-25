@@ -63,8 +63,7 @@ export class Parser {
             .flatMap(makeTree)
     }
 
-    static parse(rule: Record<string, string>) {
-        const parser = new Parser(rule)
-        return parser.parse.bind(parser)
+    static from(rule: Record<string, string>) {
+        return new Parser(rule)
     }
 }
