@@ -1,43 +1,70 @@
 import { Word } from "../util/types.ts"
 
+type Rules = [string, RegExp][]
+
+const isLowerCase =
+(char: string) =>
+    "a" <= char && char <= "z"
+
 export class Lexer {
+    rules
+    constructor(rules: Rules) {
+        this.rules = rules
+    }
+
+    *lex(input: string) {
+        const lexer = new LexerInstance(this.rules, input)
+        while (true) {
+            const tokens = lexer.getNextTokens()
+            if (!tokens) break
+            if (!isLowerCase(tokens[0][0]))
+                yield* tokens
+        }
+        yield* lexer.indents.map(_ => ["DEDENT"])
+    }
+    print(input: string) {
+        return [...this.lex(input)].map(([type, ...args]) => type + (
+            args.length
+                ? `(${args.join()})`
+                : ""
+        )).join(" ")
+    }
+
+    static from(rules: Rules) {
+        return new Lexer(rules)
+    }
+}
+
+const sticky =
+(rx: RegExp) =>
+    new RegExp(rx, "y")
+
+export class LexerInstance {
+    rules
     input
     pos = 0
     indents: number[] = []
-    constructor(input: string) {
+    constructor(
+        rules: Rules,
+        input: string,
+    ) {
+        this.rules = rules
         this.input = input
     }
-    look(): string {
-        return this.input[this.pos] || ""
-    }
-    take() {
-        return this.input[this.pos++] || ""
-    }
-    read(matcher: RegExp) {
-        let result = ""
-        while (this.look().match(matcher)) {
-            result += this.take()
-        }
-        return result
+
+    get remainder() {
+        return this.input.slice(this.pos)
     }
 
-    skipWS() {
-        this.read(/[^\S\n]/)
+    read(rx: RegExp) {
+        const matched = this.remainder.match(sticky(rx))?.[0] || ""
+        this.pos += matched.length
+        return matched
     }
-    readNumber() {
-        let result = this.read(/\d/)
-        if (this.look() == ".") {
-            result += this.take()
-            result += this.read(/\d/)
-        }
-        return result
-    }
-    readId() {
-        return this.read(/[a-zA-Z]/)
-    }
+
     readNL(): Word[] {
-        this.take() // take \n
-        const indent = this.read(/ /).length
+        this.pos++ // take \n
+        const indent = this.read(/ +/).length
 
         let prevIndent = this.indents[this.indents.length-1] || -1
 
@@ -56,45 +83,18 @@ export class Lexer {
     }
 
     getNextTokens(): Word[] | false {
-        this.skipWS()
+        if (this.remainder == "") return false
 
-        const char = this.look()
-
-        if (!char) {
-            return false
+        for (const [id, rx] of this.rules) {
+            const matched = this.read(rx)
+            if (matched == "") continue
+            return [[id, matched]]
         }
 
-        if (char.match(/\d/)) {
-            return [["num", this.readNumber()]]
-        }
-        if (char.match(/[a-zA-Z]/)) {
-            return [["id", this.readId()]]
-        }
-        if (char.match(/\n/)) {
+        if (this.remainder[0] == "\n") {
             return this.readNL()
         }
 
-        if ("+-*/()".includes(char)) {
-            return [[this.take()]]
-        } else {
-            throw new Error(`Unexpected ${char}`)
-        }
-    }
-
-    static *lex(input: string) {
-        const lexer = new Lexer(input)
-        while (true) {
-            const tokens = lexer.getNextTokens()
-            if (!tokens) break
-            yield* tokens
-        }
-        yield* lexer.indents.map(_ => ["DEDENT"])
-    }
-    static print(input: string) {
-        return [...Lexer.lex(input)].map(([type, ...args]) => type + (
-            args.length
-                ? `(${args.join()})`
-                : ""
-        )).join(" ")
+        throw new Error(`Unexpected '${this.remainder[0]}'`)
     }
 }
