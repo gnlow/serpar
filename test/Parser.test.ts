@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
-import { Parser } from "./Parser.ts"
+import { Parser } from "../src/Parser.ts"
 
 Deno.test("Parser.parse - basic", () => {
     assertEquals(
