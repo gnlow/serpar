@@ -1,4 +1,4 @@
-import { Word } from "./Word.ts"
+import { Word } from "../util/types.ts"
 
 export class Lexer {
     input

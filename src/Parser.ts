@@ -1,6 +1,4 @@
-import { Word } from "./Word.ts"
-
-type Tree = Word | [string, ...Tree[]]
+import { Word, Tree } from "../util/types.ts"
 
 export class Parser {
     rule

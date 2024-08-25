@@ -1,5 +1,8 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 import { Parser } from "../src/Parser.ts"
+import { $ } from "../util/testHelper.ts"
+
+const { Num, Div, Mul, BinExpr } = $
 
 Deno.test("Parser.parse - basic", () => {
     assertEquals(
@@ -13,22 +16,22 @@ Deno.test("Parser.parse - basic", () => {
             "Num": "expr",
             "BinExpr": "expr",
         })([
-            ["Num", "1"],
-            ["Div"],
-            ["Num", "2"],
-            ["Mul"],
-            ["Num", "3"],
+            Num("1"),
+            Div(),
+            Num("2"),
+            Mul(),
+            Num("3"),
         ]),
-        [[
-            "BinExpr",
-            [
-                "BinExpr",
-                ["Num", "1"],
-                ["Div"],
-                ["Num", "2"],
-            ],
-            ["Mul"],
-            ["Num", "3"],
-        ]]
+        [
+            BinExpr(
+                BinExpr(
+                    Num("1"),
+                    Div(),
+                    Num("2"),
+                ),
+                Mul(),
+                Num("3"),
+            )
+        ]
     )
 })
