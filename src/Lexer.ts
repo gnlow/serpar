@@ -25,7 +25,7 @@ export class Lexer {
             if (!isLowerCase(tokens[0][0]))
                 yield* tokens
         }
-        for (const plugin of this.plugins) {
+        for (const plugin of instance.pluginInstances) {
             yield* plugin.onEnd(instance)
         }
     }
@@ -52,6 +52,7 @@ const sticky =
 
 export class LexerInstance {
     lexer
+    pluginInstances
     input
     pos = 0
     constructor(
@@ -60,6 +61,8 @@ export class LexerInstance {
     ) {
         this.lexer = lexer
         this.input = input
+        this.pluginInstances = lexer.plugins
+            .map(plugin => plugin.createInstance())
     }
 
     get remainder() {
@@ -81,8 +84,8 @@ export class LexerInstance {
             return [[id, matched]]
         }
 
-        for (const plugin of this.lexer.plugins) {
-            const result = plugin.getNextTokens(this)
+        for (const pluginInstance of this.pluginInstances) {
+            const result = pluginInstance.getNextTokens(this)
             if (result) return result
         }
 
@@ -91,6 +94,10 @@ export class LexerInstance {
 }
 
 export abstract class LexerPlugin {
+    abstract createInstance(): LexerPluginInstance
+}
+
+export abstract class LexerPluginInstance {
     abstract getNextTokens(instance: LexerInstance): Word[] | false
     *onEnd(_instance: LexerInstance): Generator<Word> {}
 }

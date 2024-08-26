@@ -1,16 +1,27 @@
-import { LexerInstance, LexerPlugin } from "../Lexer.ts"
+import {
+    LexerInstance,
+    LexerPlugin,
+    LexerPluginInstance,
+} from "../Lexer.ts"
 import { Word } from "../../util/types.ts"
 
 export class IndentLexer extends LexerPlugin {
+    createInstance() {
+        return new IndentLexerInstance()
+    }
+}
+
+class IndentLexerInstance extends LexerPluginInstance {
     indents: number[] = []
 
     getNextTokens(instance: LexerInstance) {
+        console.log(this.indents, instance.remainder.slice(0, 10))
         if (instance.remainder[0] != "\n") return false
 
         instance.pos++ // take \n
         const indent = instance.read(/ +/).length
 
-        let prevIndent = this.indents[this.indents.length-1] || -1
+        let prevIndent = this.indents[this.indents.length-1] || 0
 
         const result: Word[] = [["NL"]]
 
@@ -19,7 +30,7 @@ export class IndentLexer extends LexerPlugin {
             this.indents.push(indent)
         } else while (prevIndent > indent) {
             this.indents.pop()
-            prevIndent = this.indents[this.indents.length] || -1
+            prevIndent = this.indents[this.indents.length] || 0
             result.push(["DEDENT"])
         }
 
