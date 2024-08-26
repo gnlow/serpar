@@ -1,4 +1,5 @@
 import { Word, Tree } from "../util/types.ts"
+import { escape } from "jsr:@std/regexp@1.0.0/escape"
 
 export class Parser {
     rule
@@ -20,7 +21,7 @@ export class Parser {
                 const regex = new RegExp(
                     from
                         .split(" ")
-                        .map(x => x + "\\d*")
+                        .map(x => escape(x) + "\\d*")
                         .join(" "),
                 )
                 output = output.replace(regex, match => {
