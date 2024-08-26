@@ -15,7 +15,6 @@ class IndentLexerInstance extends LexerPluginInstance {
     indents: number[] = []
 
     getNextTokens(instance: LexerInstance) {
-        console.log(this.indents, instance.remainder.slice(0, 10))
         if (instance.remainder[0] != "\n") return false
 
         instance.pos++ // take \n
