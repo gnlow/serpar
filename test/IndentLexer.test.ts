@@ -21,3 +21,12 @@ Deno.test("IndentLexer - 1", () => {
         "Id(hello) NL INDENT Id(world) Op(() Num(2) Op()) DEDENT",
     )
 })
+Deno.test("IndentLexer - 2", () => {
+    assertEquals(
+        lexer.print(
+            "hello\n" +
+            "world(2)"
+        ),
+        "Id(hello) NL Id(world) Op(() Num(2) Op())",
+    )
+})
