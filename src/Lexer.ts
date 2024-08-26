@@ -25,6 +25,7 @@ export class Lexer {
     print(input: string) {
         return [...this.lex(input)].map(([type, ...args]) => type + (
             args.length
+            && type != args[0]
                 ? `(${args.join()})`
                 : ""
         )).join(" ")
