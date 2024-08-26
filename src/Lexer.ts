@@ -8,19 +8,26 @@ const isLowerCase =
 
 export class Lexer {
     rules
-    constructor(rules: Rules) {
+    plugins
+    constructor(
+        rules: Rules,
+        plugins: LexerPlugin[] = [],
+    ) {
         this.rules = rules
+        this.plugins = plugins
     }
 
     *lex(input: string) {
-        const lexer = new LexerInstance(this.rules, input)
+        const instance = new LexerInstance(this, input)
         while (true) {
-            const tokens = lexer.getNextTokens()
+            const tokens = instance.getNextTokens()
             if (!tokens) break
             if (!isLowerCase(tokens[0][0]))
                 yield* tokens
         }
-        yield* lexer.indents.map(_ => ["DEDENT"])
+        for (const plugin of this.plugins) {
+            yield* plugin.onEnd(instance)
+        }
     }
     print(input: string) {
         return [...this.lex(input)].map(([type, ...args]) => type + (
@@ -31,8 +38,11 @@ export class Lexer {
         )).join(" ")
     }
 
-    static from(rules: Rules) {
-        return new Lexer(rules)
+    static from(
+        rules: Rules,
+        plugins: LexerPlugin[] = [],
+    ) {
+        return new Lexer(rules, plugins)
     }
 }
 
@@ -41,15 +51,14 @@ const sticky =
     new RegExp(rx, "y")
 
 export class LexerInstance {
-    rules
+    lexer
     input
     pos = 0
-    indents: number[] = []
     constructor(
-        rules: Rules,
+        lexer: Lexer,
         input: string,
     ) {
-        this.rules = rules
+        this.lexer = lexer
         this.input = input
     }
 
@@ -63,39 +72,25 @@ export class LexerInstance {
         return matched
     }
 
-    readNL(): Word[] {
-        this.pos++ // take \n
-        const indent = this.read(/ +/).length
-
-        let prevIndent = this.indents[this.indents.length-1] || -1
-
-        const result: Word[] = [["NL"]]
-
-        if (prevIndent < indent) {
-            result.push(["INDENT"])
-            this.indents.push(indent)
-        } else while (prevIndent > indent) {
-            this.indents.pop()
-            prevIndent = this.indents[this.indents.length] || -1
-            result.push(["DEDENT"])
-        }
-
-        return result
-    }
-
     getNextTokens(): Word[] | false {
         if (this.remainder == "") return false
 
-        for (const [id, rx] of this.rules) {
+        for (const [id, rx] of this.lexer.rules) {
             const matched = this.read(rx)
             if (matched == "") continue
             return [[id, matched]]
         }
 
-        if (this.remainder[0] == "\n") {
-            return this.readNL()
+        for (const plugin of this.lexer.plugins) {
+            const result = plugin.getNextTokens(this)
+            if (result) return result
         }
 
         throw new Error(`Unexpected '${this.remainder[0]}'`)
     }
+}
+
+export abstract class LexerPlugin {
+    abstract getNextTokens(instance: LexerInstance): Word[] | false
+    *onEnd(_instance: LexerInstance): Generator<Word> {}
 }
