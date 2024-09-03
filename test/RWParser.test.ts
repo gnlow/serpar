@@ -1,12 +1,12 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
-import { Parser } from "../src/Parser.ts"
+import { RWParser } from "../src/RWParser.ts"
 import { $, rules } from "../util/testHelper.ts"
 
 const { Num, Div, Mul, BinExpr } = $
 
-Deno.test("Parser.parse - basic", () => {
+Deno.test("RWParser.parse - basic", () => {
     assertEquals(
-        Parser.from(rules`
+        RWParser.from(rules`
             Mul -> opA
             Div -> opA
             Add -> opB

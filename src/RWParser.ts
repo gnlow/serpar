@@ -1,7 +1,7 @@
-import { Word, Tree } from "../util/types.ts"
+import { Word, Tree, Parser } from "../util/types.ts"
 import { escape } from "jsr:@std/regexp@1.0.0/escape"
 
-export class Parser {
+export class RWParser implements Parser {
     rule
     constructor(rule: Record<string, string>) {
         this.rule = rule
@@ -65,6 +65,6 @@ export class Parser {
     }
 
     static from(rule: Record<string, string>) {
-        return new Parser(rule)
+        return new RWParser(rule)
     }
 }
