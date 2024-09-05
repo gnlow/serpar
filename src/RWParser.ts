@@ -1,4 +1,4 @@
-import { Word, Tree, Parser } from "../util/types.ts"
+import { Token, Tree, Parser } from "../util/types.ts"
 import { escape } from "jsr:@std/regexp@1.0.0/escape"
 
 export class RWParser implements Parser {
@@ -7,10 +7,10 @@ export class RWParser implements Parser {
         this.rule = rule
     }
 
-    parse(words: Word[]): Tree[] {
+    parse(tokens: Token[]): Tree {
         const list: string[] = []
-        const input = words.map((word, i) => {
-            return word[0] + i
+        const input = tokens.map((token, i) => {
+            return token.type + i
         }).join(" ")
         let output = input
         let prev = output
@@ -28,40 +28,43 @@ export class RWParser implements Parser {
                     // console.log(`[${from} -> ${to}]`)
                     // console.log(output, "\n")
                     list.push(match)
-                    return to + (words.length + list.length - 1)
+                    return to + (tokens.length + list.length - 1)
                 })
                 if (prev != output) break
             }
             if (prev == output) break
         }
 
-        const makeTree = (id: string): Tree[] => {
+        const makeTree = (id: string): Tree => {
             const index = Number(id.match(/\d+$/)?.[0] || -1)
-            if (index == -1) return [[id]]
+            if (index == -1) return new Tree(id)
 
             const type = id.match(/^(.*[^\d]+)\d+$/)![1]
 
-            if (index < words.length) {
-                return [words[index]]
+            if (index < tokens.length) {
+                return tokens[index]
             } else {
                 const result =
-                    list[index - words.length]
+                    list[index - tokens.length]
                         .split(" ")
                         .flatMap(makeTree)
                 if (type[0] < "Z") {
-                    return [[
+                    return new Tree(
                         type,
                         ...result,
-                    ]]
+                    )
                 } else {
-                    return result
+                    return new Tree(Tree.ROOT, ...result)
                 }
             }
         }
 
-        return output
-            .split(" ")
-            .flatMap(makeTree)
+        return new Tree(
+            Tree.ROOT,
+            ...output
+                .split(" ")
+                .map(makeTree),
+        )
     }
 
     static from(rule: Record<string, string>) {

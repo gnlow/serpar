@@ -22,16 +22,14 @@ Deno.test("RWParser.parse - basic", () => {
             Mul(),
             Num("3"),
         ]),
-        [
+        BinExpr(
             BinExpr(
-                BinExpr(
-                    Num("1"),
-                    Div(),
-                    Num("2"),
-                ),
-                Mul(),
-                Num("3"),
-            )
-        ]
+                Num("1"),
+                Div(),
+                Num("2"),
+            ),
+            Mul(),
+            Num("3"),
+        )
     )
 })

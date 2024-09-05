@@ -3,7 +3,7 @@ import {
     LexerPlugin,
     LexerPluginInstance,
 } from "../Lexer.ts"
-import { Word } from "../../util/types.ts"
+import { Token } from "../../util/types.ts"
 
 export class IndentLexer extends LexerPlugin {
     createInstance() {
@@ -22,20 +22,20 @@ class IndentLexerInstance extends LexerPluginInstance {
 
         let prevIndent = this.indents[this.indents.length-1] || 0
 
-        const result: Word[] = [["NL"]]
+        const result: Token[] = [new Token("NL")]
 
         if (prevIndent < indent) {
-            result.push(["INDENT"])
+            result.push(new Token("INDENT"))
             this.indents.push(indent)
         } else while (prevIndent > indent) {
             this.indents.pop()
             prevIndent = this.indents[this.indents.length] || 0
-            result.push(["DEDENT"])
+            result.push(new Token("DEDENT"))
         }
 
         return result
     }
     *onEnd() {
-        yield* this.indents.map(_ => ["DEDENT"])
+        yield* this.indents.map(_ => new Token("DEDENT"))
     }
 }

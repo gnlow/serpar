@@ -1,4 +1,4 @@
-import { Word } from "../util/types.ts"
+import { Token } from "../util/types.ts"
 
 type Rules = [string, RegExp][]
 
@@ -22,7 +22,7 @@ export class Lexer {
         while (true) {
             const tokens = instance.getNextTokens()
             if (!tokens) break
-            if (!isLowerCase(tokens[0][0]))
+            if (!isLowerCase(tokens[0].type))
                 yield* tokens
         }
         for (const plugin of instance.pluginInstances) {
@@ -30,10 +30,10 @@ export class Lexer {
         }
     }
     print(input: string) {
-        return [...this.lex(input)].map(([type, ...args]) => type + (
-            args.length
-            && type != args[0]
-                ? `(${args.join()})`
+        return [...this.lex(input)].map(({ type, children }) => type + (
+            children.length
+            && type != children[0]
+                ? `(${children.join()})`
                 : ""
         )).join(" ")
     }
@@ -75,13 +75,13 @@ export class LexerInstance {
         return matched
     }
 
-    getNextTokens(): Word[] | false {
+    getNextTokens(): Token[] | false {
         if (this.remainder == "") return false
 
         for (const [id, rx] of this.lexer.rules) {
             const matched = this.read(rx)
             if (matched == "") continue
-            return [[id, matched]]
+            return [new Token(id, matched)]
         }
 
         for (const pluginInstance of this.pluginInstances) {
@@ -98,6 +98,6 @@ export abstract class LexerPlugin {
 }
 
 export abstract class LexerPluginInstance {
-    abstract getNextTokens(instance: LexerInstance): Word[] | false
-    *onEnd(_instance: LexerInstance): Generator<Word> {}
+    abstract getNextTokens(instance: LexerInstance): Token[] | false
+    *onEnd(_instance: LexerInstance): Generator<Token> {}
 }

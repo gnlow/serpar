@@ -1,16 +1,16 @@
 import { pipe } from "./pipe.ts"
-import { Word, Tree } from "./types.ts"
+import { Token, Tree } from "./types.ts"
 
 const handler: ProxyHandler<object> = {
-    get(_, prop) {
-        return (...tree: (string | Tree)[]) => [
+    get(_, prop: string) {
+        return (...tree: (string | Tree)[]) => new Tree(
             prop,
             ...tree,
-        ]
+        )
     }
 }
 
-export const $ = new Proxy({}, handler) as Record<string, (...tree: (string | Tree)[]) => Word>
+export const $ = new Proxy({}, handler) as Record<string, (...tree: (string | Tree)[]) => Token>
 
 const templateNormalize =
 (input: string | TemplateStringsArray, ...params: unknown[]) =>
